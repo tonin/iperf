@@ -1,3 +1,9 @@
+iperf3 (3.0.12-1~bpo70+1) unstable; urgency=low
+
+  * New upstream version
+
+ -- Antoine Delvaux <antoine.delvaux@dante.net>  Wed, 11 Mar 2015 19:43:03 +0000
+
 iperf3 (3.0.11-1~bpo70+1) unstable; urgency=low
 
   * New upstream version
