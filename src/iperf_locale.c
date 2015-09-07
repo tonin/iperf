@@ -163,9 +163,9 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "iperf3 homepage at: " PACKAGE_URL "\n"
 #endif /* PACKAGE_URL */
 #ifdef PACKAGE_BUGREPORT
-                           "Report bugs to:     " PACKAGE_BUGREPORT "\n";
+                           "Report bugs to:     " PACKAGE_BUGREPORT "\n"
 #endif /* PACKAGE_BUGREPORT */
-
+			   ;
 
 #ifdef OBSOLETE /* from old iperf: no longer supported. Add some of these back someday */
   "-d, --dualtest           Do a bidirectional test simultaneously\n"
@@ -366,6 +366,10 @@ const char report_tcpInfo[] =
 "event=TCP_Info CWND=%u SND_SSTHRESH=%u RCV_SSTHRESH=%u UNACKED=%u SACK=%u LOST=%u RETRANS=%u FACK=%u RTT=%u REORDERING=%u\n";
 #endif
 #if defined(__FreeBSD__)
+const char report_tcpInfo[] =
+"event=TCP_Info CWND=%u RCV_WIND=%u SND_SSTHRESH=%u RTT=%u\n";
+#endif
+#if defined(__NetBSD__)
 const char report_tcpInfo[] =
 "event=TCP_Info CWND=%u RCV_WIND=%u SND_SSTHRESH=%u RTT=%u\n";
 #endif

@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -2451,6 +2451,7 @@ iperf_reporter_callback(struct iperf_test *test)
             /* print interval results for each stream */
             iperf_print_intermediate(test);
             break;
+        case TEST_END:
         case DISPLAY_RESULTS:
             iperf_print_intermediate(test);
             iperf_print_results(test);
@@ -2541,6 +2542,9 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 		iprintf(test, report_bw_udp_format, sp->socket, st, et, ubuf, nbuf, irp->jitter * 1000.0, irp->interval_cnt_error, irp->interval_packet_count, lost_percent, irp->omitted?report_omitted:"");
 	}
     }
+
+    if (test->logfile)
+        iflush(test);
 }
 
 /**************************************************************************/
