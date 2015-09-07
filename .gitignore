@@ -24,3 +24,4 @@ src/t_uuid
 examples/.libs
 examples/mic
 examples/mis
+.pc/
