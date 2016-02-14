@@ -1,8 +1,15 @@
-iperf3 (3.1.2~0.a1-1~bpo70+1) unstable; urgency=low
+iperf3 (3.1.2-1~bpo70+1) wheezy-backports; urgency=low
 
-  * Backport to wheezy
+  * Backport to wheezy-backports
 
- -- Antoine Delvaux <a.delvaux@man.poznan.pl>  Fri, 04 Dec 2015 08:51:29 +0000
+ -- Antoine Delvaux <a.delvaux@man.poznan.pl>  Sun, 14 Feb 2016 12:25:44 +0000
+
+iperf3 (3.1.2-1) unstable; urgency=low
+
+  * New upstream version
+  * Removing man-pages patch that has been integrated upstream.
+
+ -- Antoine Delvaux <a.delvaux@man.poznan.pl>  Sun, 14 Feb 2016 12:17:51 +0000
 
 iperf3 (3.1~1.b3-1) unstable; urgency=low
 
