@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -205,6 +205,7 @@ iperf_handle_message_server(struct iperf_test *test)
                 FD_CLR(sp->socket, &test->write_set);
                 close(sp->socket);
             }
+            test->reporter_callback(test);
 	    if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
                 return -1;
             if (iperf_exchange_results(test) < 0)
@@ -213,7 +214,6 @@ iperf_handle_message_server(struct iperf_test *test)
                 return -1;
             if (test->on_test_finish)
                 test->on_test_finish(test);
-            test->reporter_callback(test);
             break;
         case IPERF_DONE:
             break;
@@ -453,11 +453,11 @@ iperf_run_server(struct iperf_test *test)
 
     if (test->affinity != -1) 
 	if (iperf_setaffinity(test->affinity) != 0)
-	    return -1;
+	    return -2;
 
     if (test->json_output)
 	if (iperf_json_start(test) < 0)
-	    return -1;
+	    return -2;
 
     if (test->json_output) {
 	cJSON_AddItemToObject(test->json_start, "version", cJSON_CreateString(version));
@@ -471,7 +471,7 @@ iperf_run_server(struct iperf_test *test)
 
     // Open socket and listen
     if (iperf_server_listen(test) < 0) {
-        return -1;
+        return -2;
     }
 
     // Begin calculating CPU utilization

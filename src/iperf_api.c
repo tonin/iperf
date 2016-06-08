@@ -523,11 +523,11 @@ iperf_on_connect(struct iperf_test *test)
 	cJSON_AddStringToObject(test->json_start, "cookie", test->cookie);
         if (test->protocol->id == SOCK_STREAM) {
 	    if (test->settings->mss)
-		cJSON_AddIntToObject(test->json_start, "tcp_mss", test->settings->mss);
+		cJSON_AddNumberToObject(test->json_start, "tcp_mss", test->settings->mss);
 	    else {
 		len = sizeof(opt);
 		getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len);
-		cJSON_AddIntToObject(test->json_start, "tcp_mss_default", opt);
+		cJSON_AddNumberToObject(test->json_start, "tcp_mss_default", opt);
 	    }
 	}
     } else if (test->verbose) {
@@ -1135,40 +1135,40 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddTrueToObject(j, "tcp");
 	else if (test->protocol->id == Pudp)
 	    cJSON_AddTrueToObject(j, "udp");
-	cJSON_AddIntToObject(j, "omit", test->omit);
+	cJSON_AddNumberToObject(j, "omit", test->omit);
 	if (test->server_affinity != -1)
-	    cJSON_AddIntToObject(j, "server_affinity", test->server_affinity);
+	    cJSON_AddNumberToObject(j, "server_affinity", test->server_affinity);
 	if (test->duration)
-	    cJSON_AddIntToObject(j, "time", test->duration);
+	    cJSON_AddNumberToObject(j, "time", test->duration);
 	if (test->settings->bytes)
-	    cJSON_AddIntToObject(j, "num", test->settings->bytes);
+	    cJSON_AddNumberToObject(j, "num", test->settings->bytes);
 	if (test->settings->blocks)
-	    cJSON_AddIntToObject(j, "blockcount", test->settings->blocks);
+	    cJSON_AddNumberToObject(j, "blockcount", test->settings->blocks);
 	if (test->settings->mss)
-	    cJSON_AddIntToObject(j, "MSS", test->settings->mss);
+	    cJSON_AddNumberToObject(j, "MSS", test->settings->mss);
 	if (test->no_delay)
 	    cJSON_AddTrueToObject(j, "nodelay");
-	cJSON_AddIntToObject(j, "parallel", test->num_streams);
+	cJSON_AddNumberToObject(j, "parallel", test->num_streams);
 	if (test->reverse)
 	    cJSON_AddTrueToObject(j, "reverse");
 	if (test->settings->socket_bufsize)
-	    cJSON_AddIntToObject(j, "window", test->settings->socket_bufsize);
+	    cJSON_AddNumberToObject(j, "window", test->settings->socket_bufsize);
 	if (test->settings->blksize)
-	    cJSON_AddIntToObject(j, "len", test->settings->blksize);
+	    cJSON_AddNumberToObject(j, "len", test->settings->blksize);
 	if (test->settings->rate)
-	    cJSON_AddIntToObject(j, "bandwidth", test->settings->rate);
+	    cJSON_AddNumberToObject(j, "bandwidth", test->settings->rate);
 	if (test->settings->burst)
-	    cJSON_AddIntToObject(j, "burst", test->settings->burst);
+	    cJSON_AddNumberToObject(j, "burst", test->settings->burst);
 	if (test->settings->tos)
-	    cJSON_AddIntToObject(j, "TOS", test->settings->tos);
+	    cJSON_AddNumberToObject(j, "TOS", test->settings->tos);
 	if (test->settings->flowlabel)
-	    cJSON_AddIntToObject(j, "flowlabel", test->settings->flowlabel);
+	    cJSON_AddNumberToObject(j, "flowlabel", test->settings->flowlabel);
 	if (test->title)
 	    cJSON_AddStringToObject(j, "title", test->title);
 	if (test->congestion)
 	    cJSON_AddStringToObject(j, "congestion", test->congestion);
 	if (test->get_server_output)
-	    cJSON_AddIntToObject(j, "get_server_output", iperf_get_test_get_server_output(test));
+	    cJSON_AddNumberToObject(j, "get_server_output", iperf_get_test_get_server_output(test));
 
 	if (test->debug) {
 	    printf("send_parameters:\n%s\n", cJSON_Print(j));
@@ -1267,14 +1267,14 @@ send_results(struct iperf_test *test)
 	i_errno = IEPACKAGERESULTS;
 	r = -1;
     } else {
-	cJSON_AddFloatToObject(j, "cpu_util_total", test->cpu_util[0]);
-	cJSON_AddFloatToObject(j, "cpu_util_user", test->cpu_util[1]);
-	cJSON_AddFloatToObject(j, "cpu_util_system", test->cpu_util[2]);
+	cJSON_AddNumberToObject(j, "cpu_util_total", test->cpu_util[0]);
+	cJSON_AddNumberToObject(j, "cpu_util_user", test->cpu_util[1]);
+	cJSON_AddNumberToObject(j, "cpu_util_system", test->cpu_util[2]);
 	if ( ! test->sender )
 	    sender_has_retransmits = -1;
 	else
 	    sender_has_retransmits = test->sender_has_retransmits;
-	cJSON_AddIntToObject(j, "sender_has_retransmits", sender_has_retransmits);
+	cJSON_AddNumberToObject(j, "sender_has_retransmits", sender_has_retransmits);
 
 	/* If on the server and sending server output, then do this */
 	if (test->role == 's' && test->get_server_output) {
@@ -1318,12 +1318,12 @@ send_results(struct iperf_test *test)
 		    cJSON_AddItemToArray(j_streams, j_stream);
 		    bytes_transferred = test->sender ? sp->result->bytes_sent : sp->result->bytes_received;
 		    retransmits = (test->sender && test->sender_has_retransmits) ? sp->result->stream_retrans : -1;
-		    cJSON_AddIntToObject(j_stream, "id", sp->id);
-		    cJSON_AddIntToObject(j_stream, "bytes", bytes_transferred);
-		    cJSON_AddIntToObject(j_stream, "retransmits", retransmits);
-		    cJSON_AddFloatToObject(j_stream, "jitter", sp->jitter);
-		    cJSON_AddIntToObject(j_stream, "errors", sp->cnt_error);
-		    cJSON_AddIntToObject(j_stream, "packets", sp->packet_count);
+		    cJSON_AddNumberToObject(j_stream, "id", sp->id);
+		    cJSON_AddNumberToObject(j_stream, "bytes", bytes_transferred);
+		    cJSON_AddNumberToObject(j_stream, "retransmits", retransmits);
+		    cJSON_AddNumberToObject(j_stream, "jitter", sp->jitter);
+		    cJSON_AddNumberToObject(j_stream, "errors", sp->cnt_error);
+		    cJSON_AddNumberToObject(j_stream, "packets", sp->packet_count);
 		}
 	    }
 	    if (r == 0 && test->debug) {
@@ -1384,9 +1384,9 @@ get_results(struct iperf_test *test)
 		printf("get_results\n%s\n", cJSON_Print(j));
 	    }
 
-	    test->remote_cpu_util[0] = j_cpu_util_total->valuefloat;
-	    test->remote_cpu_util[1] = j_cpu_util_user->valuefloat;
-	    test->remote_cpu_util[2] = j_cpu_util_system->valuefloat;
+	    test->remote_cpu_util[0] = j_cpu_util_total->valuedouble;
+	    test->remote_cpu_util[1] = j_cpu_util_user->valuedouble;
+	    test->remote_cpu_util[2] = j_cpu_util_system->valuedouble;
 	    result_has_retransmits = j_sender_has_retransmits->valueint;
 	    if (! test->sender)
 		test->sender_has_retransmits = result_has_retransmits;
@@ -1415,7 +1415,7 @@ get_results(struct iperf_test *test)
 			    sid = j_id->valueint;
 			    bytes_transferred = j_bytes->valueint;
 			    retransmits = j_retransmits->valueint;
-			    jitter = j_jitter->valuefloat;
+			    jitter = j_jitter->valuedouble;
 			    cerror = j_errors->valueint;
 			    pcount = j_packets->valueint;
 			    SLIST_FOREACH(sp, &test->streams, streams)
@@ -1496,14 +1496,32 @@ JSON_read(int fd)
     uint32_t hsize, nsize;
     char *str;
     cJSON *json = NULL;
+    int rc;
 
+    /*
+     * Read a four-byte integer, which is the length of the JSON to follow.
+     * Then read the JSON into a buffer and parse it.  Return a parsed JSON
+     * structure, NULL if there was an error.
+     */
     if (Nread(fd, (char*) &nsize, sizeof(nsize), Ptcp) >= 0) {
 	hsize = ntohl(nsize);
-	str = (char *) malloc(hsize+1);	/* +1 for EOS */
+	/* Allocate a buffer to hold the JSON */
+	str = (char *) calloc(sizeof(char), hsize+1);	/* +1 for trailing null */
 	if (str != NULL) {
-	    if (Nread(fd, str, hsize, Ptcp) >= 0) {
-		str[hsize] = '\0';	/* add the EOS */
-		json = cJSON_Parse(str);
+	    rc = Nread(fd, str, hsize, Ptcp);
+	    if (rc >= 0) {
+		/*
+		 * We should be reading in the number of bytes corresponding to the
+		 * length in that 4-byte integer.  If we don't the socket might have
+		 * prematurely closed.  Only do the JSON parsing if we got the
+		 * correct number of bytes.
+		 */
+		if (rc == hsize) {
+		    json = cJSON_Parse(str);
+		}
+		else {
+		    printf("WARNING:  Size of data read does not correspond to offered length\n");
+		}
 	    }
 	}
 	free(str);
@@ -2093,13 +2111,13 @@ iperf_print_results(struct iperf_test *test)
 	    /* Summary, UDP. */
 	    lost_percent = 100.0 * sp->cnt_error / (sp->packet_count - sp->omitted_packet_count);
 	    if (test->json_output)
-		cJSON_AddItemToObject(json_summary_stream, "udp", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (double) sp->jitter * 1000.0, (int64_t) sp->cnt_error, (int64_t) (sp->packet_count - sp->omitted_packet_count), (double) lost_percent));
+		cJSON_AddItemToObject(json_summary_stream, "udp", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f  out_of_order: %d", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (double) sp->jitter * 1000.0, (int64_t) sp->cnt_error, (int64_t) (sp->packet_count - sp->omitted_packet_count), (double) lost_percent, (int64_t) sp->outoforder_packets));
 	    else {
 		iprintf(test, report_bw_udp_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->jitter * 1000.0, sp->cnt_error, (sp->packet_count - sp->omitted_packet_count), lost_percent, "");
 		if (test->role == 'c')
 		    iprintf(test, report_datagrams, sp->socket, (sp->packet_count - sp->omitted_packet_count));
 		if (sp->outoforder_packets > 0)
-		    iprintf(test, report_sum_outoforder, start_time, end_time, sp->cnt_error);
+		    iprintf(test, report_sum_outoforder, start_time, end_time, sp->outoforder_packets);
 	    }
 	}
 
@@ -2218,6 +2236,7 @@ iperf_reporter_callback(struct iperf_test *test)
             /* print interval results for each stream */
             iperf_print_intermediate(test);
             break;
+        case TEST_END:
         case DISPLAY_RESULTS:
             iperf_print_intermediate(test);
             iperf_print_results(test);
