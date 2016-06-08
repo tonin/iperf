@@ -1,8 +1,8 @@
-iperf3 (3.0.12-1~bpo70+1) UNRELEASED; urgency=low
+iperf3 (3.0.12-1~bpo70+1) wheezy-backport; urgency=medium
 
   * New upstream version
 
- -- Antoine Delvaux <antoine.delvaux@dante.net>  Fri, 24 Apr 2015 10:35:38 +0000
+ -- Antoine Delvaux <antoine.delvaux@dante.net>  Wed, 08 Jun 2016 20:26:56 +0000
 
 iperf3 (3.0.11-1~bpo70+1) unstable; urgency=low
 
