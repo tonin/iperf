@@ -1,3 +1,9 @@
+iperf3 (3.1.3-1) unstable; urgency=medium
+
+  * New upstream version
+
+ -- Antoine Delvaux <a.delvaux@man.poznan.pl>  Wed, 08 Jun 2016 19:33:53 +0000
+
 iperf3 (3.1.2-1) unstable; urgency=low
 
   * New upstream version
