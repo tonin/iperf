@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, 2016, The Regents of the University of
+ * iperf, Copyright (c) 2014-2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -127,6 +127,12 @@ iperf_get_control_socket(struct iperf_test *ipt)
 }
 
 int
+iperf_get_control_socket_mss(struct iperf_test *ipt)
+{
+    return ipt->ctrl_sck_mss;
+}
+
+int
 iperf_get_test_omit(struct iperf_test *ipt)
 {
     return ipt->omit;
@@ -142,6 +148,12 @@ uint64_t
 iperf_get_test_rate(struct iperf_test *ipt)
 {
     return ipt->settings->rate;
+}
+
+uint64_t
+iperf_get_test_fqrate(struct iperf_test *ipt)
+{
+    return ipt->settings->fqrate;
 }
 
 int
@@ -270,12 +282,6 @@ iperf_get_test_one_off(struct iperf_test *ipt)
     return ipt->one_off;
 }
 
-int
-iperf_get_no_fq_socket_pacing(struct iperf_test *ipt)
-{
-    return ipt->no_fq_socket_pacing;
-}
-
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -330,6 +336,12 @@ void
 iperf_set_test_rate(struct iperf_test *ipt, uint64_t rate)
 {
     ipt->settings->rate = rate;
+}
+
+void
+iperf_set_test_fqrate(struct iperf_test *ipt, uint64_t fqrate)
+{
+    ipt->settings->fqrate = fqrate;
 }
 
 void
@@ -447,12 +459,6 @@ iperf_set_test_one_off(struct iperf_test *ipt, int one_off)
     ipt->one_off = one_off;
 }
 
-void
-iperf_set_no_fq_socket_pacing(struct iperf_test *ipt, int no_pacing)
-{
-    ipt->no_fq_socket_pacing = no_pacing;
-}
-
 /********************** Get/set test protocol structure ***********************/
 
 struct protocol *
@@ -544,7 +550,6 @@ iperf_on_connect(struct iperf_test *test)
     struct sockaddr_in *sa_inP;
     struct sockaddr_in6 *sa_in6P;
     socklen_t len;
-    int opt;
 
     now_secs = time((time_t*) 0);
     (void) strftime(now_str, sizeof(now_str), rfc1123_fmt, gmtime(&now_secs));
@@ -585,9 +590,7 @@ iperf_on_connect(struct iperf_test *test)
 	    if (test->settings->mss)
 		cJSON_AddNumberToObject(test->json_start, "tcp_mss", test->settings->mss);
 	    else {
-		len = sizeof(opt);
-		getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len);
-		cJSON_AddNumberToObject(test->json_start, "tcp_mss_default", opt);
+		cJSON_AddNumberToObject(test->json_start, "tcp_mss_default", test->ctrl_sck_mss);
 	    }
 	}
     } else if (test->verbose) {
@@ -596,9 +599,7 @@ iperf_on_connect(struct iperf_test *test)
             if (test->settings->mss)
                 iprintf(test, "      TCP MSS: %d\n", test->settings->mss);
             else {
-                len = sizeof(opt);
-                getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len);
-                iprintf(test, "      TCP MSS: %d (default)\n", opt);
+                iprintf(test, "      TCP MSS: %d (default)\n", test->ctrl_sck_mss);
             }
         }
 
@@ -665,9 +666,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif
 	{"pidfile", required_argument, NULL, 'I'},
 	{"logfile", required_argument, NULL, OPT_LOGFILE},
+	{"forceflush", no_argument, NULL, OPT_FORCEFLUSH},
 	{"get-server-output", no_argument, NULL, OPT_GET_SERVER_OUTPUT},
 	{"udp-counters-64bit", no_argument, NULL, OPT_UDP_COUNTERS_64BIT},
-	{"no-fq-socket-pacing", no_argument, NULL, OPT_NO_FQ_SOCKET_PACING},
+ 	{"no-fq-socket-pacing", no_argument, NULL, OPT_NO_FQ_SOCKET_PACING},
+	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -940,6 +943,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	    case OPT_LOGFILE:
 		test->logfile = strdup(optarg);
 		break;
+	    case OPT_FORCEFLUSH:
+		test->forceflush = 1;
+		break;
 	    case OPT_GET_SERVER_OUTPUT:
 		test->get_server_output = 1;
 		client_flag = 1;
@@ -949,7 +955,18 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
 	    case OPT_NO_FQ_SOCKET_PACING:
 #if defined(HAVE_SO_MAX_PACING_RATE)
-		test->no_fq_socket_pacing = 1;
+		printf("Warning:  --no-fq-socket-pacing is deprecated\n");
+		test->settings->fqrate = 0;
+		client_flag = 1;
+#else /* HAVE_SO_MAX_PACING_RATE */
+		i_errno = IEUNIMP;
+		return -1;
+#endif
+		break;
+	    case OPT_FQ_RATE:
+#if defined(HAVE_SO_MAX_PACING_RATE)
+		test->settings->fqrate = unit_atof_rate(optarg);
+		client_flag = 1;
 #else /* HAVE_SO_MAX_PACING_RATE */
 		i_errno = IEUNIMP;
 		return -1;
@@ -987,13 +1004,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     }
     if (blksize == 0) {
 	if (test->protocol->id == Pudp)
-	    blksize = DEFAULT_UDP_BLKSIZE;
+	    blksize = 0;	/* try to dynamically determine from MSS */
 	else if (test->protocol->id == Psctp)
 	    blksize = DEFAULT_SCTP_BLKSIZE;
 	else
 	    blksize = DEFAULT_TCP_BLKSIZE;
     }
-    if (blksize <= 0 || blksize > MAX_BLOCKSIZE) {
+    if ((test->protocol->id != Pudp && blksize <= 0) 
+	|| blksize > MAX_BLOCKSIZE) {
 	i_errno = IEBLOCKSIZE;
 	return -1;
     }
@@ -1086,8 +1104,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 	    gettimeofday(&now, NULL);
 	streams_active = 0;
 	SLIST_FOREACH(sp, &test->streams, streams) {
-	    if (! test->no_fq_socket_pacing ||
-		(sp->green_light &&
+	    if ((sp->green_light &&
 		 (write_setP == NULL || FD_ISSET(sp->socket, write_setP)))) {
 		if ((r = sp->snd(sp)) < 0) {
 		    if (r == NET_SOFTERROR)
@@ -1320,6 +1337,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "len", test->settings->blksize);
 	if (test->settings->rate)
 	    cJSON_AddNumberToObject(j, "bandwidth", test->settings->rate);
+	if (test->settings->fqrate)
+	    cJSON_AddNumberToObject(j, "fqrate", test->settings->fqrate);
 	if (test->settings->burst)
 	    cJSON_AddNumberToObject(j, "burst", test->settings->burst);
 	if (test->settings->tos)
@@ -1330,12 +1349,12 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddStringToObject(j, "title", test->title);
 	if (test->congestion)
 	    cJSON_AddStringToObject(j, "congestion", test->congestion);
+	if (test->congestion_used)
+	    cJSON_AddStringToObject(j, "congestion_used", test->congestion_used);
 	if (test->get_server_output)
 	    cJSON_AddNumberToObject(j, "get_server_output", iperf_get_test_get_server_output(test));
 	if (test->udp_counters_64bit)
 	    cJSON_AddNumberToObject(j, "udp_counters_64bit", iperf_get_test_udp_counters_64bit(test));
-	if (test->no_fq_socket_pacing)
-	    cJSON_AddNumberToObject(j, "no_fq_socket_pacing", iperf_get_no_fq_socket_pacing(test));
 
 	cJSON_AddStringToObject(j, "client_version", IPERF_VERSION);
 
@@ -1400,6 +1419,8 @@ get_parameters(struct iperf_test *test)
 	    test->settings->blksize = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "bandwidth")) != NULL)
 	    test->settings->rate = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "fqrate")) != NULL)
+	    test->settings->fqrate = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "burst")) != NULL)
 	    test->settings->burst = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "TOS")) != NULL)
@@ -1410,12 +1431,12 @@ get_parameters(struct iperf_test *test)
 	    test->title = strdup(j_p->valuestring);
 	if ((j_p = cJSON_GetObjectItem(j, "congestion")) != NULL)
 	    test->congestion = strdup(j_p->valuestring);
+	if ((j_p = cJSON_GetObjectItem(j, "congestion_used")) != NULL)
+	    test->congestion_used = strdup(j_p->valuestring);
 	if ((j_p = cJSON_GetObjectItem(j, "get_server_output")) != NULL)
 	    iperf_set_test_get_server_output(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "udp_counters_64bit")) != NULL)
 	    iperf_set_test_udp_counters_64bit(test, 1);
-	if ((j_p = cJSON_GetObjectItem(j, "no_fq_socket_pacing")) != NULL)
-	    iperf_set_no_fq_socket_pacing(test, 1);
 	
 	if (test->sender && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
@@ -1451,6 +1472,9 @@ send_results(struct iperf_test *test)
 	else
 	    sender_has_retransmits = test->sender_has_retransmits;
 	cJSON_AddNumberToObject(j, "sender_has_retransmits", sender_has_retransmits);
+	if ( test->congestion_used ) {
+	    cJSON_AddStringToObject(j, "congestion_used", test->congestion_used);
+	}
 
 	/* If on the server and sending server output, then do this */
 	if (test->role == 's' && test->get_server_output) {
@@ -1525,6 +1549,7 @@ get_results(struct iperf_test *test)
     cJSON *j_cpu_util_total;
     cJSON *j_cpu_util_user;
     cJSON *j_cpu_util_system;
+    cJSON *j_remote_congestion_used;
     cJSON *j_sender_has_retransmits;
     int result_has_retransmits;
     cJSON *j_streams;
@@ -1633,6 +1658,12 @@ get_results(struct iperf_test *test)
 		}
 	    }
 	}
+
+	j_remote_congestion_used = cJSON_GetObjectItem(j, "congestion_used");
+	if (j_remote_congestion_used != NULL) {
+	    test->remote_congestion_used = strdup(j_remote_congestion_used->valuestring);
+	}
+
 	cJSON_Delete(j);
     }
     return r;
@@ -1829,6 +1860,8 @@ iperf_defaults(struct iperf_test *testp)
 #endif /* HAVE_CPUSET_SETAFFINITY */
     testp->title = NULL;
     testp->congestion = NULL;
+    testp->congestion_used = NULL;
+    testp->remote_congestion_used = NULL;
     testp->server_port = PORT;
     testp->ctrl_sck = -1;
     testp->prot_listener = -1;
@@ -1844,6 +1877,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->socket_bufsize = 0;    /* use autotuning */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
     testp->settings->rate = 0;
+    testp->settings->fqrate = 0;
     testp->settings->burst = 0;
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
@@ -1957,6 +1991,10 @@ iperf_free_test(struct iperf_test *test)
 	free(test->title);
     if (test->congestion)
 	free(test->congestion);
+    if (test->congestion_used)
+	free(test->congestion_used);
+    if (test->remote_congestion_used)
+	free(test->remote_congestion_used);
     if (test->omit_timer != NULL)
 	tmr_cancel(test->omit_timer);
     if (test->timer != NULL)
@@ -2492,11 +2530,47 @@ iperf_print_results(struct iperf_test *test)
         }
     }
 
-    if (test->json_output)
+    if (test->json_output) {
 	cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host_total: %f  host_user: %f  host_system: %f  remote_total: %f  remote_user: %f  remote_system: %f", (double) test->cpu_util[0], (double) test->cpu_util[1], (double) test->cpu_util[2], (double) test->remote_cpu_util[0], (double) test->remote_cpu_util[1], (double) test->remote_cpu_util[2]));
+	if (test->protocol->id == Ptcp) {
+	    char *snd_congestion = NULL, *rcv_congestion = NULL;
+	    if (test->sender) {
+		snd_congestion = test->congestion_used;
+		rcv_congestion = test->remote_congestion_used;
+	    }
+	    else {
+		snd_congestion = test->remote_congestion_used;
+		rcv_congestion = test->congestion_used;
+	    }
+	    if (snd_congestion) {
+		cJSON_AddStringToObject(test->json_end, "sender_tcp_congestion", snd_congestion);
+	    }
+	    if (rcv_congestion) {
+		cJSON_AddStringToObject(test->json_end, "receiver_tcp_congestion", rcv_congestion);
+	    }
+	}
+    }
     else {
 	if (test->verbose) {
 	    iprintf(test, report_cpu, report_local, test->sender?report_sender:report_receiver, test->cpu_util[0], test->cpu_util[1], test->cpu_util[2], report_remote, test->sender?report_receiver:report_sender, test->remote_cpu_util[0], test->remote_cpu_util[1], test->remote_cpu_util[2]);
+
+	    if (test->protocol->id == Ptcp) {
+		char *snd_congestion = NULL, *rcv_congestion = NULL;
+		if (test->sender) {
+		    snd_congestion = test->congestion_used;
+		    rcv_congestion = test->remote_congestion_used;
+		}
+		else {
+		    snd_congestion = test->remote_congestion_used;
+		    rcv_congestion = test->congestion_used;
+		}
+		if (snd_congestion) {
+		    iprintf(test, "snd_tcp_congestion %s\n", snd_congestion);
+		}
+		if (rcv_congestion) {
+		    iprintf(test, "rcv_tcp_congestion %s\n", rcv_congestion);
+		}
+	    }
 	}
 
 	/* Print server output if we're on the client and it was requested/provided */
@@ -2585,7 +2659,12 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
     }
 
     unit_snprintf(ubuf, UNIT_LEN, (double) (irp->bytes_transferred), 'A');
-    bandwidth = (double) irp->bytes_transferred / (double) irp->interval_duration;
+    if (irp->interval_duration > 0.0) {
+	bandwidth = (double) irp->bytes_transferred / (double) irp->interval_duration;
+    }
+    else {
+	bandwidth = 0.0;
+    }
     unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
     
     st = timeval_diff(&sp->result->start_time, &irp->interval_start_time);
@@ -2628,7 +2707,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	}
     }
 
-    if (test->logfile)
+    if (test->logfile || test->forceflush)
         iflush(test);
 }
 

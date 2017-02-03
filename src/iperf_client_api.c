@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, The Regents of the University of
+ * iperf, Copyright (c) 2014-2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <netinet/in.h>
 #include <sys/select.h>
 #include <sys/uio.h>
 #include <arpa/inet.h>
@@ -43,6 +44,11 @@
 #include "net.h"
 #include "timer.h"
 
+#if defined(HAVE_TCP_CONGESTION)
+#if !defined(TCP_CA_NAME_MAX)
+#define TCP_CA_NAME_MAX 16
+#endif /* TCP_CA_NAME_MAX */
+#endif /* HAVE_TCP_CONGESTION */
 
 int
 iperf_create_streams(struct iperf_test *test)
@@ -58,6 +64,31 @@ iperf_create_streams(struct iperf_test *test)
 	    test->bind_port += i;
         if ((s = test->protocol->connect(test)) < 0)
             return -1;
+
+#if defined(HAVE_TCP_CONGESTION)
+	if (test->protocol->id == Ptcp) {
+	    if (test->congestion) {
+		if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
+		    close(s);
+		    i_errno = IESETCONGESTION;
+		    return -1;
+		} 
+	    }
+	    {
+		socklen_t len = TCP_CA_NAME_MAX;
+		char ca[TCP_CA_NAME_MAX + 1];
+		if (getsockopt(s, IPPROTO_TCP, TCP_CONGESTION, ca, &len) < 0) {
+		    close(s);
+		    i_errno = IESETCONGESTION;
+		    return -1;
+		}
+		test->congestion_used = strdup(ca);
+		if (test->debug) {
+		    printf("Congestion algorithm is %s\n", test->congestion_used);
+		}
+	    }
+	}
+#endif /* HAVE_TCP_CONGESTION */
 
 	if (test->sender)
 	    FD_SET(s, &test->write_set);
@@ -303,6 +334,61 @@ iperf_connect(struct iperf_test *test)
 
     FD_SET(test->ctrl_sck, &test->read_set);
     if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
+
+    int opt;
+    socklen_t len;
+
+    len = sizeof(opt);
+    if (getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len) < 0) {
+	test->ctrl_sck_mss = 0;
+    }
+    else {
+	test->ctrl_sck_mss = opt;
+    }
+
+    if (test->verbose) {
+	printf("Control connection MSS %d\n", test->ctrl_sck_mss);
+    }
+
+    /*
+     * If we're doing a UDP test and the block size wasn't explicitly
+     * set, then use the known MSS of the control connection to pick
+     * an appropriate default.  If we weren't able to get the
+     * MSS for some reason, then default to something that should
+     * work on non-jumbo-frame Ethernet networks.  The goal is to
+     * pick a reasonable default that is large but should get from
+     * sender to receiver without any IP fragmentation.
+     *
+     * We assume that the control connection is routed the same as the
+     * data packets (thus has the same PMTU).  Also in the case of
+     * --reverse tests, we assume that the MTU is the same in both
+     * directions.  Note that even if the algorithm guesses wrong,
+     * the user always has the option to override.
+     */
+    if (test->protocol->id == Pudp) {
+	if (test->settings->blksize == 0) {
+	    if (test->ctrl_sck_mss) {
+		test->settings->blksize = test->ctrl_sck_mss;
+	    }
+	    else {
+		test->settings->blksize = DEFAULT_UDP_BLKSIZE;
+	    }
+	    if (test->verbose) {
+		printf("Setting UDP block size to %d\n", test->settings->blksize);
+	    }
+	}
+
+	/*
+	 * Regardless of whether explicitly or implicitly set, if the
+	 * block size is larger than the MSS, print a warning.
+	 */
+	if (test->settings->blksize > test->ctrl_sck_mss) {
+	    char str[128];
+	    snprintf(str, sizeof(str),
+		     "Warning:  UDP block size %d exceeds TCP MSS %d, may result in fragmentation / drops", test->settings->blksize, test->ctrl_sck_mss);
+	    warning(str);
+	}
+    }
 
     return 0;
 }
