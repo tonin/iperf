@@ -1,0 +1,2 @@
+Tests: tcp, udp
+Depends: iperf3

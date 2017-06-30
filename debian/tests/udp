@@ -1,0 +1,7 @@
+#!/bin/sh -e
+
+iperf3 --server --daemon --one-off
+echo Server started OK
+
+iperf3 --client localhost --udp
+echo Client finished OK
