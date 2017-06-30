@@ -1,0 +1,62 @@
+iperf3 (3.2-1~bpo70+1) perfsonar-wheezy-release; urgency=low
+
+  * Backport to Wheezy.
+
+ -- Antoine Delvaux <antoine.delvaux@man.poznan.pl>  Fri, 30 Jun 2017 14:52:12 +0000
+
+iperf3 (3.2-1) perfsonar-jessie-release; urgency=low
+
+  * New upstream version
+
+ -- Antoine Delvaux <antoine.delvaux@man.poznan.pl>  Fri, 30 Jun 2017 14:11:59 +0000
+
+iperf3 (3.1.6-1) perfsonar-jessie-release; urgency=low
+
+  * New upstream version
+
+ -- Antoine Delvaux <antoine.delvaux@man.poznan.pl>  Fri, 03 Feb 2017 16:43:23 +0100
+
+iperf3 (3.1.3-1) unstable; urgency=medium
+
+  * New upstream version
+
+ -- Antoine Delvaux <a.delvaux@man.poznan.pl>  Wed, 08 Jun 2016 19:33:53 +0000
+
+iperf3 (3.1.2-1) unstable; urgency=low
+
+  * New upstream version
+  * Removing man-pages patch that has been integrated upstream.
+
+ -- Antoine Delvaux <a.delvaux@man.poznan.pl>  Sun, 14 Feb 2016 12:17:51 +0000
+
+iperf3 (3.1~1.b3-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- Antoine Delvaux <a.delvaux@man.poznan.pl>  Mon, 07 Sep 2015 17:11:56 +0000
+
+iperf3 (3.0.11-1~bpo70+1) unstable; urgency=low
+
+  * New upstream version
+
+ -- Antoine Delvaux <antoine.delvaux@dante.net>  Sat, 24 Jan 2015 21:46:43 +0000
+
+iperf3 (3.0.7-1~bpo70+1) unstable; urgency=medium
+
+  * Backport to wheezy
+
+ -- Antoine Delvaux <antoine.delvaux@dante.net>  Sat, 24 Jan 2015 21:40:59 +0000
+
+iperf3 (3.0.7-1) unstable; urgency=medium
+
+  * new upstream version
+  * tarball repackaging not necessary anymore
+
+ -- Raoul Gunnar Borenius <borenius@dfn.de>  Thu, 11 Sep 2014 11:57:57 +0200
+
+iperf3 (3.0.5+dfsg1-1) unstable; urgency=low
+
+  * Initial release (Closes: #739921)
+  * Repackage tarball to delete bootstrap.sh file with restrictive copyright.
+
+ -- Raoul Gunnar Borenius <borenius@dfn.de>  Sat, 21 Jun 2014 15:57:27 +0200
