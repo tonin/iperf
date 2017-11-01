@@ -1,8 +1,14 @@
-iperf3 (3.2-1~bpo70+1) perfsonar-wheezy-release; urgency=low
+iperf3 (3.3-1~bpo70+1) perfsonar-wheezy-release; urgency=low
 
-  * Backport to Wheezy.
+  * Backport to Wheeezy.
 
- -- Antoine Delvaux <antoine.delvaux@man.poznan.pl>  Fri, 30 Jun 2017 14:52:12 +0000
+ -- Antoine Delvaux <antoine.delvaux@man.poznan.pl>  Wed, 01 Nov 2017 14:24:32 +0000
+
+iperf3 (3.3-1) perfsonar-jessie-release; urgency=low
+
+  * New upstream version
+
+ -- Antoine Delvaux <antoine.delvaux@man.poznan.pl>  Wed, 01 Nov 2017 14:21:28 +0000
 
 iperf3 (3.2-1) perfsonar-jessie-release; urgency=low
 
