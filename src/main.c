@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -41,10 +41,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
-#include <netinet/tcp.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -104,7 +100,7 @@ main(int argc, char **argv)
     if (iperf_parse_arguments(test, argc, argv) < 0) {
         iperf_err(test, "parameter error - %s", iperf_strerror(i_errno));
         fprintf(stderr, "\n");
-        usage_long();
+        usage_long(stdout);
         exit(1);
     }
 
@@ -119,7 +115,7 @@ main(int argc, char **argv)
 
 static jmp_buf sigend_jmp_buf;
 
-static void
+static void __attribute__ ((noreturn))
 sigend_handler(int sig)
 {
     longjmp(sigend_jmp_buf, 1);
@@ -129,12 +125,13 @@ sigend_handler(int sig)
 static int
 run(struct iperf_test *test)
 {
-    int consecutive_errors;
-
     /* Termination signals. */
     iperf_catch_sigend(sigend_handler);
     if (setjmp(sigend_jmp_buf))
 	iperf_got_sigend(test);
+
+    /* Ignore SIGPIPE to simplify error handling */
+    signal(SIGPIPE, SIG_IGN);
 
     switch (test->role) {
         case 's':
@@ -145,21 +142,19 @@ run(struct iperf_test *test)
 		    iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 		}
 	    }
-	    consecutive_errors = 0;
 	    if (iperf_create_pidfile(test) < 0) {
 		i_errno = IEPIDFILE;
 		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 	    }
             for (;;) {
-		if (iperf_run_server(test) < 0) {
+		int rc;
+		rc = iperf_run_server(test);
+		if (rc < 0) {
 		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
-		    ++consecutive_errors;
-		    if (consecutive_errors >= 5) {
-		        iperf_errexit(test, "too many errors, exiting");
-			break;
+		    if (rc < -1) {
+		        iperf_errexit(test, "exiting");
 		    }
-                } else
-		    consecutive_errors = 0;
+                }
                 iperf_reset_test(test);
                 if (iperf_get_test_one_off(test))
                     break;
@@ -176,6 +171,7 @@ run(struct iperf_test *test)
     }
 
     iperf_catch_sigend(SIG_DFL);
+    signal(SIGPIPE, SIG_DFL);
 
     return 0;
 }

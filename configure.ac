@@ -1,4 +1,4 @@
-# iperf, Copyright (c) 2014, 2015, The Regents of the University of
+# iperf, Copyright (c) 2014, 2015, 2016, 2017, The Regents of the University of
 # California, through Lawrence Berkeley National Laboratory (subject
 # to receipt of any required approvals from the U.S. Dept. of
 # Energy).  All rights reserved.
@@ -24,7 +24,8 @@
 # file for complete information.
 
 # Initialize the autoconf system for the specified tool, version and mailing list
-AC_INIT(iperf, 3.1, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
+AC_INIT(iperf, 3.3, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
+m4_include([config/ax_check_openssl.m4])
 AC_LANG(C)
 
 # Specify where the auxiliary files created by configure should go. The config
@@ -57,14 +58,14 @@ AC_HEADER_STDC
 # Check for systems which need -lsocket and -lnsl
 #AX_LIB_SOCKET_NSL
 
-# Solaris puts nanosleep in -lrt
-AC_SEARCH_LIBS(nanosleep, [rt], [], [
-echo "nanosleep() required for timing operations."
+# Check for the math library (needed by cjson on some platforms)
+AC_SEARCH_LIBS(floor, [m], [], [
+echo "floor()"
 exit 1
 ])
 
-# Solaris puts hstrerror in -lresolv
-AC_SEARCH_LIBS(hstrerror, [resolv], [], [
+# Solaris puts nanosleep in -lrt
+AC_SEARCH_LIBS(nanosleep, [rt], [], [
 echo "nanosleep() required for timing operations."
 exit 1
 ])
@@ -84,6 +85,9 @@ exit 1
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 
+# Check for poll.h (it's in POSIX so everyone should have it?)
+AC_CHECK_HEADERS([poll.h])
+
 # Check for SCTP support
 AC_CHECK_HEADERS([sys/socket.h])
 AC_CHECK_HEADERS([netinet/sctp.h],
@@ -96,6 +100,21 @@ AC_CHECK_HEADERS([netinet/sctp.h],
 #include <sys/socket.h>
 #endif
 ])
+
+if test "x$with_openssl" = "xno"; then
+    AC_MSG_WARN( [Building without OpenSSL; disabling iperf_auth functionality.] )
+else
+    # Check for OPENSSL support
+    AX_CHECK_OPENSSL(
+        [ AC_DEFINE([HAVE_SSL], [1], [OpenSSL Is Available]) ],
+	[ if test "x$with_openssl" != "x"; then
+	  AC_MSG_FAILURE([--with-openssl was given, but test for OpenSSL failed])
+	  fi ]
+    )
+    LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"
+    LIBS="$OPENSSL_LIBS $LIBS"
+    CPPFLAGS="$OPENSSL_INCLUDES $CPPFLAGS"
+fi
 
 # Check for TCP_CONGESTION sockopt (believed to be Linux and FreeBSD only)
 AC_CACHE_CHECK([TCP_CONGESTION socket option],
@@ -140,5 +159,19 @@ AC_CHECK_FUNCS([cpuset_setaffinity sched_setaffinity],
 # this system call, but they're all different in terms of what headers
 # it needs and what arguments it expects.
 AC_CHECK_FUNCS([sendfile])
+
+# Check for packet pacing socket option (Linux only for now).
+AC_CACHE_CHECK([SO_MAX_PACING_RATE socket option],
+[iperf3_cv_header_so_max_pacing_rate],
+AC_EGREP_CPP(yes,
+[#include <sys/socket.h>
+#ifdef SO_MAX_PACING_RATE
+  yes
+#endif
+],iperf3_cv_header_so_max_pacing_rate=yes,iperf3_cv_header_so_max_pacing_rate=no))
+if test "x$iperf3_cv_header_so_max_pacing_rate" = "xyes"; then
+    AC_DEFINE([HAVE_SO_MAX_PACING_RATE], [1], [Have SO_MAX_PACING_RATE sockopt.])
+fi
+
 
 AC_OUTPUT([Makefile src/Makefile src/version.h examples/Makefile iperf3.spec])
