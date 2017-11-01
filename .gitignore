@@ -28,4 +28,4 @@ examples/.libs
 examples/Makefile
 examples/mic
 examples/mis
-.pc
+.pc/
