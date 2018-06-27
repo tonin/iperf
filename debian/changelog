@@ -1,3 +1,9 @@
+iperf3 (3.6-1) perfsonar-jessie-release; urgency=low
+
+  * New upstream version
+
+ -- Antoine Delvaux <antoine.delvaux@man.poznan.pl>  Wed, 27 Jun 2018 16:39:49 +0000
+
 iperf3 (3.5-1) perfsonar-jessie-release; urgency=low
 
   * New upstream version
