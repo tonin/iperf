@@ -1,7 +1,9 @@
 Source: iperf3
 Section: net
 Priority: optional
-Maintainer: Raoul Gunnar Borenius <borenius@dfn.de>
+Maintainer: perfSONAR developers <debian@perfsonar.net>
+Uploaders: Antoine Delvaux <antoine.delvaux@man.poznan.pl>,
+ Valentin Vidic <Valentin.Vidic@CARNet.hr>
 Build-Depends: debhelper (>= 9), autotools-dev, uuid-dev
 Standards-Version: 3.9.5
 Homepage: http://software.es.net/iperf/

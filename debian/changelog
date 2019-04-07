@@ -1,3 +1,9 @@
+iperf3 (3.6.1~0-1) perfsonar-patch-snapshot; urgency=low
+
+  * New upstream version
+
+ -- Antoine Delvaux <antoine.delvaux@man.poznan.pl>  Sun, 07 Apr 2019 17:08:02 +0000
+
 iperf3 (3.6-1) perfsonar-jessie-release; urgency=low
 
   * New upstream version
