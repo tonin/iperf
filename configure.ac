@@ -34,7 +34,7 @@ AC_CONFIG_AUX_DIR(config)
 
 
 # Initialize the automake system
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign])
 AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(src/iperf_config.h)
 
@@ -51,6 +51,13 @@ AC_PROG_LIBTOOL
 if test "x$GCC" = "xyes"; then
   CFLAGS="$CFLAGS -Wall"
 fi
+
+# Check if profiling must be disabled
+AC_ARG_ENABLE([profiling],
+    AS_HELP_STRING([--disable-profiling], [Disable iperf profiling binary]),
+    [:],
+    [enable_profiling=yes])
+AM_CONDITIONAL([ENABLE_PROFILING], [test x$enable_profiling = xyes])
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -182,5 +189,9 @@ if test "x$iperf3_cv_header_so_max_pacing_rate" = "xyes"; then
     AC_DEFINE([HAVE_SO_MAX_PACING_RATE], [1], [Have SO_MAX_PACING_RATE sockopt.])
 fi
 
+# Check if we need -lrt for clock_gettime
+AC_SEARCH_LIBS(clock_gettime, [rt posix4])
+# Check for clock_gettime support
+AC_CHECK_FUNCS([clock_gettime])
 
 AC_OUTPUT([Makefile src/Makefile src/version.h examples/Makefile iperf3.spec])
