@@ -3,12 +3,8 @@ Upstream-Name: iperf
 Source: http://software.es.net/iperf/
 
 Files: *
-Copyright: 1991-2014, The Regents of the University of California
+Copyright: 1991-2016, The Regents of the University of California
 License: BSD-3-clause
-
-Files: src/locale.c
-Copyright: 2014, The Regents of the University of California; 1999-2003, The Board of Trustees of the University of Illinois
-License: NCSA
 
 Files: src/units.c src/tcp_window_size.c
 Copyright: 1999-2003, The Board of Trustees of the University of Illinois
@@ -36,7 +32,7 @@ License: MIT/X11
   THE SOFTWARE.
 
 Files: aclocal.m4 *Makefile.in config/* configure
-Copyright: 1994-2009 Free Software Foundation
+Copyright: 1994-2015 Free Software Foundation
 License: GPL-2+
 
 Files: config/install-sh
@@ -82,8 +78,14 @@ License: public-domain
  Created: 1993-05-16
  Public domain.
 
+Files: src/portable_endian.h
+Copyright: None
+License: public-domain
+ Original author: Mathias Panzenböck
+ Public domain.
+
 Files: debian/*
-Copyright: 2014 Raoul Gunnar Borenius <borenius@dfn.de>
+Copyright: 2014-2016 Raoul Gunnar Borenius <borenius@dfn.de>
 License: GPL-2+
 
 License: GPL-2+
