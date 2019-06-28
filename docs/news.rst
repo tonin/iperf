@@ -1,6 +1,29 @@
 iperf3 Project News
 ===================
 
+2019-06-21:  iperf-3.7 released
+-------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.7.tar.gz
+| SHA256:  ``d846040224317caf2f75c843d309a950a7db23f9b44b94688ccbe557d6d1710c  iperf-3.7.tar.gz``
+
+iperf 3.6 adds the ``--bidir`` flag for bidirectional tests, includes
+some minor enhancements, and fixes a number of bugs.  More details can
+be found in the release notes.
+
+Note:  Documentation for the ``--bidir`` flag was inadvertently
+omitted from the manual page.  This will be fixed in a future
+release.
+
+2018-06-25:  iperf-3.6 released
+-------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.6.tar.gz
+| SHA256:  ``de5d51e46dc460cc590fb4d44f95e7cad54b74fea1eba7d6ebd6f8887d75946e  iperf-3.6.tar.gz``
+
+iperf 3.6 adds the ``--extra-data`` and ``--repeating-payload``
+options and fixes some minor bugs.
+
 2018-03-02:  iperf-3.5 released
 -------------------------------
 
