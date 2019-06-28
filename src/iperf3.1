@@ -139,8 +139,6 @@ CPUs).
 .TP
 .BR -B ", " --bind " \fIhost\fR"
 bind to the specific interface associated with address \fIhost\fR.
-If the host has multiple interfaces, it will use the first interface
-by default.
 .TP
 .BR -V ", " --verbose " "
 give more detailed output 
@@ -279,6 +277,10 @@ number of parallel client streams to run. Note that iperf3 is single threaded, s
 .BR -R ", " --reverse
 reverse the direction of a test, so that the server sends data to the
 client
+.TP
+.BR --bidir
+test in both directions (normal and reverse), with both the client and
+server sending and receiving data simultaneously
 .TP
 .BR -w ", " --window " \fIn\fR[KM]"
 window size / socket buffer size (this gets sent to the server and used on that side too)
