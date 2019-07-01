@@ -1,4 +1,4 @@
-iperf3 (3.7-1) perfsonar-minor-snapshot; urgency=low
+iperf3 (3.7-1) perfsonar-release; urgency=low
 
   * New upstream version
   * Reconciling changes with official Debian Stretch release.
@@ -7,7 +7,7 @@ iperf3 (3.7-1) perfsonar-minor-snapshot; urgency=low
   * Added multiarch support
   * Bumped standards version to 3.9.8
 
- -- Antoine Delvaux <antoine.delvaux@man.poznan.pl>  Fri, 28 Jun 2019 18:57:34 +0000
+ -- Antoine Delvaux <antoine.delvaux@man.poznan.pl>  Mon, 01 Jul 2019 14:24:41 +0000
 
 iperf3 (3.6-1) perfsonar-jessie-release; urgency=low
 
