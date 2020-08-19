@@ -1,3 +1,10 @@
+iperf3 (3.9-1) perfsonar-4.3-staging; urgency=low
+
+  * New upstream version
+  * Installing libiperf.la along with other libiperf-dev library files.
+
+ -- Antoine Delvaux <antoine.delvaux@man.poznan.pl>  Wed, 19 Aug 2020 13:32:54 +0000
+
 iperf3 (3.7-1) perfsonar-release; urgency=low
 
   * New upstream version
