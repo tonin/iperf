@@ -1,3 +1,9 @@
+iperf3 (3.10.1-1) perfsonar-4.4-staging; urgency=low
+
+  * New upstream version
+
+ -- Antoine Delvaux <antoine.delvaux@man.poznan.pl>  Thu, 03 Jun 2021 12:35:16 +0000
+
 iperf3 (3.9-1) perfsonar-4.3-staging; urgency=low
 
   * New upstream version
